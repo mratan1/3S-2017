@@ -1,11 +1,8 @@
 /*
-* Hard coded initial input current and voltage values, constant illumination
 * 
-* Objective: code stabilizes number of lanturns at maximum power
-* 
-* Next step: varying illumination values, input varying data
+* Objective:  stabilize number of lanturns at maximum power, vary power and restabilize
 *
-* Last edit: 2/02/17 by Kevin Keene 
+* Last edit: 2/11/17 by Kevin Keene 
 *
 * File: MPPTTester.ino
 * --------------------------
@@ -49,9 +46,9 @@ struct PanelMeasurements {
 
 /****************************  GLOBAL VARIABLES   ****************************/
 
-RTC_DS1307 RTC; // Real Time Clock
+//RTC_DS1307 RTC; // Real Time Clock
 
-
+float illumination = 5.0; //initial value
 int numActivePins = 1;
 PanelMeasurements prevMeasurements;
 
@@ -63,12 +60,13 @@ void setup() {
   Serial.begin(9600);
   //setUpSD();
   //logHeader(); 
-  setUpRTC();
+  //setUpRTC();
   setUpPins(); 
 
 //set initial prevMeasurements values, initiate movement up curve
   prevMeasurements.current = 0; 
   prevMeasurements.power = 0; 
+  
   
 }
 
@@ -77,7 +75,7 @@ void setup() {
 void loop() {
   perturbAndObserve();
   //logData();
-  delay(1000); //1 second
+  delay(5000); 
 }
 
 /********************************  FUNCTIONS  *********************************/
@@ -89,7 +87,7 @@ void loop() {
  * To reset the time: uncomment the line. This will reset to time of upload
  */
 
-void setUpRTC(){
+/*void setUpRTC(){
   Wire.begin();  
 
   if(!RTC.begin()){
@@ -100,7 +98,7 @@ void setUpRTC(){
     Serial.println("RTC is NOT running!");
     RTC.adjust(DateTime(__DATE__, __TIME__));
   }
-}
+}*/
 
 /*
  * Function: setUpPins
@@ -122,9 +120,17 @@ void setUpPins(){
  */
 PanelMeasurements measureInputs() {
   PanelMeasurements measurements;
+  
+  if (Serial.available() > 0) {
+    illumination = Serial.parseFloat();
+  }
+  
+  Serial.print("Illumination ");
+  Serial.print(illumination);
+  Serial.print("\n");
 
   float measureCurrent = numActivePins * 0.5; //lanturn draws 0.5A
-  float measureVoltage = 40 * sqrt(1 - measureCurrent*measureCurrent / 25); //eclipse equation
+  float measureVoltage = 40.0 * sqrt(1.0 - measureCurrent*measureCurrent / (illumination * illumination)); //eclipse equation
   
   measurements.voltage = measureVoltage;
   measurements.current = measureCurrent;
