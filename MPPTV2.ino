@@ -155,25 +155,39 @@ PanelMeasurements measureInputs() {
  *     If panel power stays the same or decreases, and panel current increases: charge 1 fewer lantern
  *     If panel power stays the same or decreases, and panel current stays the same or decreases: charge 1 additional lantern
  */
+const float BUFFER_POWER = 0.5;
+const float VOLTAGE_LIMIT = 40; 
 void perturbAndObserve() {
   PanelMeasurements newMeasurements = measureInputs();
-  if (newMeasurements.power > prevMeasurements.power) {
-    if (newMeasurements.current > prevMeasurements.current) {
-      addOutput(); 
-    } else {
-      removeOutput();
-    }
-  } else {
-    if (newMeasurements.current > prevMeasurements.current) {
-      removeOutput();
-    } else {
-      addOutput();
-    }
+  // addOutput(); 
+   // cout << "V = " << newMeasurements.voltage <<  " Cur P = " << newMeasurements.power << " Prev P = "
+   //  << prevMeasurements.power << " Lanterns Active: " << lanterns << endl; 
+  
+    if (newMeasurements.power - prevMeasurements.power > BUFFER_POWER) {
+      if (newMeasurements.current > prevMeasurements.current && newMeasurements.voltage > VOLTAGE_LIMIT) {
+       addOutput(); 
+      } else {
+       removeOutput(); 
+      }
+    } else if(newMeasurements.power -prevMeasurements.power < BUFFER_POWER && newMeasurements.power > prevMeasurements.power ){
+      if (newMeasurements.voltage > prevMeasurements.voltage) {
+         removeOutput(); 
+      }else if(newMeasurements.voltage > VOLTAGE_LIMIT){
+         addOutput(); 
+      }
 
+    }else if(newMeasurements.power - prevMeasurements.power < -BUFFER_POWER) {
+      if (newMeasurements.current > prevMeasurements.current) {
+        removeOutput(); 
+      } else if(newMeasurements.voltage > VOLTAGE_LIMIT){
+        addOutput(); 
+      }
   }
-  activatePins();
+  activatePins(); 
   prevMeasurements = newMeasurements;
 }
+
+
 
 /*
  * Function: addOutput
